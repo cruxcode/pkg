@@ -74,10 +74,13 @@ if (NODE_VERSION_MAJOR < 12 || require('worker_threads').isMainThread) {
   }
 }
 
+var eOption = null;
+
 if (process.env.PKG_EXECPATH === EXECPATH) {
   process.argv.splice(1, 1);
-
-  if (process.argv[1] && process.argv[1] !== '-') {
+  if (process.argv[1] === '-e') {
+    [, , eOption] = process.argv;
+  } else if (process.argv[1] && process.argv[1] !== '-') {
     // https://github.com/nodejs/node/blob/1a96d83a223ff9f05f7d942fb84440d323f7b596/lib/internal/bootstrap/node.js#L269
     process.argv[1] = path.resolve(process.argv[1]);
   }
@@ -1979,7 +1982,12 @@ function payloadFileSync(pointer) {
   };
 
   Module.runMain = function runMain() {
-    Module._load(ENTRYPOINT, null, true);
+    if (eOption) {
+      // eslint-disable-next-line
+      eval(eOption);
+    } else {
+      Module._load(ENTRYPOINT, null, true);
+    }
     process._tickCallback();
   };
 })();
